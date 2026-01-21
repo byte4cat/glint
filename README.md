@@ -22,12 +22,10 @@ Ensure you have the following C libraries installed on your system (Linux exampl
 
 ## 2. Build from Source
 ```sh
-# Clone the repository
 git clone https://github.com/byte4cat/glint.git
 cd glint
-
-# Build and run using the Makefile
-make run
+make install
+# after that, you can run it by typing `glint` in the terminal
 ```
 
 # ⚙️ Configuration
