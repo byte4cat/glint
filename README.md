@@ -5,6 +5,8 @@ A lightweight, elegant note and task widget for your desktop.
 
 Built with **Rust**, **GTK4**, and **Layer Shell**, it is designed to be minimal, fast, and highly customizable.
 
+**Currently, NOT SUPPORT Windows.**
+
 # 🚀 Features
 
 - **Layer Shell Integration**: Works as a desktop widget (stays behind or above windows).
@@ -36,7 +38,6 @@ make install
 | Platform | Path |
 | -------- | ---------- |
 | Linux     | `~/.config/glint/config.toml`     |
-| Windows | `%AppData%\Roaming\glint\config.toml`       |
 | MacOS | `~/Library/Application Support/glint/config.toml`       |
 
 
