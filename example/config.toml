@@ -1,0 +1,12 @@
+title = "🎯 OBJECTIVES"
+tasks = [
+    "1. Add a new note",
+    "2. Check out the live refresh!",
+]
+anchor_bottom = true
+anchor_right = true
+margin_bottom = 40
+margin_right = 40
+background_color = "rgba(20, 20, 30, 0.9)"
+text_color = "#00ffcc"
+font_size = 20
