@@ -1,12 +1,18 @@
-title = "🎯 OBJECTIVES"
+title = "🎯 GOALS"
 tasks = [
-    "1. Add a new note",
-    "2. Check out the live refresh!",
+    "Add a new note",
+    "Check out the live refresh!",
 ]
 anchor_bottom = true
 anchor_right = true
 margin_bottom = 40
 margin_right = 40
-background_color = "rgba(20, 20, 30, 0.9)"
-text_color = "#00ffcc"
-font_size = 20
+# background_color = "rgba(20, 20, 30, 0.9)"
+# or
+background_color = "#1e1e2e"
+text_color = "#ccdd6f4"
+font_size = 16
+border_radius = 16
+border_color = "#89b4fa"
+border_width = "2g"
+
