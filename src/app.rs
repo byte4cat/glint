@@ -45,10 +45,10 @@ impl GlintApp {
 
         let css = format!(
             ".glint-window {{
-            background-color: {bg}; 
-            background-image: none; 
-            border-radius: 16px; 
-            min-width: 240px;
+                background-color: {bg}; 
+                background-image: none; 
+                border-radius: 16px; 
+                min-width: 240px;
             }} 
             label {{ 
                 color: {text}; 
@@ -71,7 +71,13 @@ impl GlintApp {
             );
         }
 
+        // fix windows not re-size issue and update content
+        self.window.set_visible(false);
         self.label.set_markup(&config.format_markdown());
+        self.window.set_size_request(-1, -1);
+        self.window.set_default_size(0, 0);
+        self.window.set_visible(true);
+        self.window.queue_resize();
     }
 
     pub fn run(self) {
