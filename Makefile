@@ -1,21 +1,7 @@
 NAME = glint
 CARGO = cargo
-
-ifeq ($(OS), Windows_NT)
-    EXE_EXT = .exe
-    RM = del /Q /F
-    INSTALL_DIR = $(USERPROFILE)\AppData\Local\Microsoft\WindowsApps
-    CP = copy /Y
-    MKDIR_CMD = if not exist "$(INSTALL_DIR)" mkdir "$(INSTALL_DIR)"
-    FIX_P = $(subst /,\,$(1))
-else
-    EXE_EXT =
-    RM = rm -f
-    INSTALL_DIR = /usr/local/bin
-    CP = sudo install -Dm755
-    MKDIR_CMD = sudo mkdir -p "$(INSTALL_DIR)"
-    FIX_P = $(1)
-endif
+PREFIX = /usr/local
+BIN_DIR = $(PREFIX)/bin
 
 .PHONY: all build run clean check fmt help install uninstall
 
@@ -34,18 +20,13 @@ release:
 	$(CARGO) build --release
 
 install: release
-	@echo "Installing $(NAME) to $(INSTALL_DIR)..."
-	@$(MKDIR_CMD)
-	$(CP) $(call FIX_P,target/release/$(NAME)$(EXE_EXT)) $(call FIX_P,$(INSTALL_DIR)/$(NAME)$(EXE_EXT))
+	@echo "Installing $(NAME) to $(BIN_DIR)..."
+	@sudo install -Dm755 target/release/$(NAME) $(BIN_DIR)/$(NAME)
 	@echo "Installation complete."
 
 uninstall:
 	@echo "Removing $(NAME) from $(INSTALL_DIR)..."
-	ifeq ($(OS), Windows_NT)
-		$(RM) "$(INSTALL_DIR)\$(NAME)$(EXE_EXT)"
-	else
-		sudo $(RM) $(INSTALL_DIR)/$(NAME)
-	endif
+	sudo $(RM) $(BIN_DIR)/$(NAME)
 
 clean:
 	@echo "Cleaning target directory..."

@@ -8,6 +8,8 @@ pub struct Config {
     pub title: String,
     #[serde(default = "default_tasks")]
     pub tasks: Vec<String>,
+    #[serde(default = "default_monitor_name")]
+    pub monitor_name: Option<String>,
     #[serde(default = "default_true")]
     pub anchor_bottom: bool,
     #[serde(default = "default_true")]
@@ -37,11 +39,13 @@ fn default_title() -> String {
 fn default_tasks() -> Vec<String> {
     vec![
         "⚠️ No valid config found, using defaults.".to_string(),
-        "Please check example config at example/config.toml in our github repository".to_string(),
-        "🐧 Linux: ~/.config/glint/config.toml".to_string(),
-        "🪟 Windows: AppData\\Roaming\\glint\\config.toml".to_string(),
-        "🍎 MacOS: ~/Library/Application Support/glint/config.toml".to_string(),
+        "Please Check example config at example/config.toml in our github repository".to_string(),
+        "🐧 ~/.config/glint/config.toml".to_string(),
     ]
+}
+
+fn default_monitor_name() -> Option<String> {
+    None
 }
 
 fn default_true() -> bool {
@@ -106,6 +110,7 @@ impl Config {
         Self {
             title: default_title(),
             tasks: default_tasks(),
+            monitor_name: default_monitor_name(),
             anchor_bottom: default_true(),
             anchor_right: default_true(),
             margin_bottom: default_margin(),

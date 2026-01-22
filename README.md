@@ -1,11 +1,9 @@
 # ✨ Glint
 
-A lightweight, elegant note and task widget for your desktop.
+A lightweight, elegant note and task widget for **Wayland Compositor**.
 **Glint** stays in the background of your workspace, providing quick access to your tasks or notes with a clean, Markdown-supported interface.
 
 Built with **Rust**, **GTK4**, and **Layer Shell**, it is designed to be minimal, fast, and highly customizable.
-
-**Currently, NOT SUPPORT Windows.**
 
 # 🚀 Features
 
@@ -38,7 +36,6 @@ make install
 | Platform | Path |
 | -------- | ---------- |
 | Linux     | `~/.config/glint/config.toml`     |
-| MacOS | `~/Library/Application Support/glint/config.toml`       |
 
 
 ## Example `config.toml`
@@ -52,6 +49,7 @@ tasks = [
 ]
 
 # Positioning
+monitor_name = 'DP-1' # not support hot reload
 anchor_bottom = true
 anchor_right = true
 margin_bottom = 40

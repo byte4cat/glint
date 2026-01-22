@@ -23,7 +23,25 @@ impl GlintApp {
 
         window.init_layer_shell();
         window.set_layer(Layer::Background);
+        window.set_namespace("glint");
         window.add_css_class("glint-window");
+
+        // on specific monitor
+        let display = gtk4::gdk::Display::default().expect("Could not connect to a display.");
+        let monitors = display.monitors();
+        if let Some(ref target_name) = config.monitor_name {
+            for i in 0..monitors.n_items() {
+                if let Some(m) = monitors.item(i) {
+                    let monitor = m
+                        .downcast::<gtk4::gdk::Monitor>()
+                        .expect("Failed to downcast monitor");
+                    if monitor.connector().map(|s| s.to_string()) == Some(target_name.clone()) {
+                        window.set_monitor(&monitor);
+                        break;
+                    }
+                }
+            }
+        }
 
         let label = Label::builder()
             .justify(gtk4::Justification::Left)
@@ -43,13 +61,7 @@ impl GlintApp {
         }
     }
 
-    // Only call this when we KNOW the config is different
-    fn apply_ui(&self, config: &Config) {
-        self.window.set_anchor(Edge::Bottom, config.anchor_bottom);
-        self.window.set_anchor(Edge::Right, config.anchor_right);
-        self.window.set_margin(Edge::Bottom, config.margin_bottom);
-        self.window.set_margin(Edge::Right, config.margin_right);
-
+    fn apply_css(&self, config: &Config) {
         let css = format!(
             ".glint-window {{
                 background-color: {bg}; 
@@ -71,8 +83,17 @@ impl GlintApp {
             text = config.text_color.trim(),
             size = config.font_size,
         );
-
         self.provider.load_from_data(&css);
+    }
+
+    // Only call this when we KNOW the config is different
+    fn apply_ui(&self, config: &Config) {
+        self.window.set_anchor(Edge::Bottom, config.anchor_bottom);
+        self.window.set_anchor(Edge::Right, config.anchor_right);
+        self.window.set_margin(Edge::Bottom, config.margin_bottom);
+        self.window.set_margin(Edge::Right, config.margin_right);
+
+        self.apply_css(config);
 
         if let Some(display) = gtk4::gdk::Display::default() {
             style_context_add_provider_for_display(
