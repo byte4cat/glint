@@ -41,12 +41,8 @@ make install
 ## Example `config.toml`
 
 ```toml
-title = "✨ DAILY TASKS"
-tasks = [
-    "Finish the Rust project",
-    "Go to the gym",
-    "Read 20 pages of a book"
-]
+note_path = "path/to/your/notes.md"
+title_size = 24
 
 # Positioning
 monitor_name = 'DP-1' # not support hot reload
@@ -59,6 +55,7 @@ margin_right = 40
 background_color = "#1e1e2e"
 text_color = "#cdd6f4"
 font_size = 14
+font_family = ["JetBrains Mono", "sans-serif"]
 border_width = 3
 border_color = "#89b4fa"
 border_radius = 16

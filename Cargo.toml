@@ -1,6 +1,6 @@
 [package]
 name = "glint"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Glint: A lightweight note window widget"
 
@@ -11,3 +11,5 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 dirs = "5.0"
 pulldown-cmark = "0.10"
+shellexpand = "3.1.1"
+notify = "8.2.0"

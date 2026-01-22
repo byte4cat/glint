@@ -1,5 +1,7 @@
+use notify::{RecursiveMode, Watcher};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::mpsc::channel;
 
 use crate::config::Config;
 use gtk4::prelude::*;
@@ -18,7 +20,8 @@ pub struct GlintApp {
 
 impl GlintApp {
     pub fn new(app: &Application) -> Self {
-        let config = Config::load();
+        let config = Config::load()
+            .expect("failed to load config.toml, please check ~/.config/glint/config.toml");
         let window = ApplicationWindow::builder().application(app).build();
 
         window.init_layer_shell();
@@ -77,6 +80,7 @@ impl GlintApp {
     }
 
     fn apply_css(&self, config: &Config) {
+        let ff_list = config.font_family.join(", ");
         let css = format!(
             ".glint-window {{
                 background-color: {bg}; 
@@ -88,10 +92,11 @@ impl GlintApp {
             label {{ 
                 color: {text}; 
                 padding: 25px 30px; 
-                font-family: 'JetBrains Mono', 'sans-serif'; 
+                font-family: {ff};
                 font-size: {size}pt;
                 margin: 0;
             }}",
+            ff = ff_list,
             bg = config.background_color,
             b_width = config.border_width,
             b_color = config.border_color,
@@ -135,19 +140,73 @@ impl GlintApp {
     }
 
     pub fn run(self) {
-        let initial_config = self.current_config.borrow().clone();
-        self.apply_ui(&initial_config);
-        self.window.present();
+        let app_rc = Rc::new(self);
 
-        let app = Rc::new(self);
-        glib::timeout_add_local(std::time::Duration::from_secs(2), move || {
-            let new_config = Config::load();
-            // check if the new config is different from the stored one
-            if new_config != *app.current_config.borrow() {
-                app.apply_ui(&new_config);
-                *app.current_config.borrow_mut() = new_config;
+        {
+            let initial_config = app_rc.current_config.borrow().clone();
+            app_rc.apply_ui(&initial_config);
+        }
+
+        app_rc.window.present();
+
+        let (tx, rx) = channel();
+
+        let mut watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
+            if let Ok(event) = res {
+                use notify::event::{EventKind, ModifyKind};
+
+                match event.kind {
+                    EventKind::Modify(ModifyKind::Data(_)) | EventKind::Modify(ModifyKind::Any) => {
+                        let _ = tx.send(());
+                    }
+                    EventKind::Create(_) => {
+                        let _ = tx.send(());
+                    }
+                    _ => {}
+                }
+            }
+        })
+        .expect("failed to create file change listener");
+
+        let config_dir = dirs::config_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("~/.config"))
+            .join("glint");
+
+        if config_dir.exists() {
+            watcher.watch(&config_dir, RecursiveMode::NonRecursive).ok();
+            println!("watching config directory: {:?}", config_dir);
+        }
+
+        let note_path_str = {
+            let config = app_rc.current_config.borrow();
+            shellexpand::tilde(&config.note_path).to_string()
+        };
+        let note_path = std::path::Path::new(&note_path_str);
+
+        if let Some(note_dir) = note_path.parent() {
+            if note_dir.exists() {
+                let _ = watcher.watch(note_dir, RecursiveMode::NonRecursive);
+                println!("watching note directory: {:?}", note_dir);
+            }
+        }
+
+        Box::leak(Box::new(watcher));
+
+        let app_clone = Rc::clone(&app_rc);
+        glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
+            let mut changed = false;
+
+            while let Ok(_) = rx.try_recv() {
+                changed = true;
             }
 
+            if changed {
+                println!("file change，hot reload...");
+                if let Ok(new_config) = Config::load() {
+                    app_clone.apply_ui(&new_config);
+                    *app_clone.current_config.borrow_mut() = new_config;
+                }
+            }
             glib::ControlFlow::Continue
         });
     }

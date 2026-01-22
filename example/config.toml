@@ -1,9 +1,5 @@
-title = "🎯 GOALS"
+note_path = "path/to/your/notes.md"
 title_size = 24
-tasks = [
-    "Add a new note",
-    "Check out the live refresh!",
-]
 # monitor_name = 'DP-1' # not support hot reload
 anchor_bottom = true
 anchor_right = true
@@ -14,6 +10,7 @@ margin_right = 40
 background_color = "#1e1e2e"
 text_color = "#ccdd6f4"
 font_size = 16
+font_family = ["JetBrains Mono", "sans-serif"]
 border_radius = 16
 border_color = "#89b4fa"
 border_width = 2
