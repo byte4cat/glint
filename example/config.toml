@@ -1,4 +1,5 @@
 title = "🎯 GOALS"
+title_size = 24
 tasks = [
     "Add a new note",
     "Check out the live refresh!",
@@ -15,5 +16,5 @@ text_color = "#ccdd6f4"
 font_size = 16
 border_radius = 16
 border_color = "#89b4fa"
-border_width = "2g"
+border_width = 2
 

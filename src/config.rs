@@ -1,3 +1,4 @@
+use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
@@ -6,6 +7,8 @@ use std::path::PathBuf;
 pub struct Config {
     #[serde(default = "default_title")]
     pub title: String,
+    #[serde(default = "default_title_size")]
+    pub title_size: u32,
     #[serde(default = "default_tasks")]
     pub tasks: Vec<String>,
     #[serde(default = "default_monitor_name")]
@@ -34,6 +37,10 @@ pub struct Config {
 
 fn default_title() -> String {
     "✨ GLINT".to_string()
+}
+
+fn default_title_size() -> u32 {
+    24
 }
 
 fn default_tasks() -> Vec<String> {
@@ -109,6 +116,7 @@ impl Config {
     fn default_config() -> Self {
         Self {
             title: default_title(),
+            title_size: default_title_size(),
             tasks: default_tasks(),
             monitor_name: default_monitor_name(),
             anchor_bottom: default_true(),
@@ -125,7 +133,63 @@ impl Config {
     }
 
     pub fn format_markdown(&self) -> String {
-        let items: Vec<String> = self.tasks.iter().map(|t| format!("• {}", t)).collect();
-        format!("<b>{}</b>\n\n{}", self.title, items.join("\n"))
+        let mut pango_output = format!(
+            "<span font_weight='bold' size='{}pt' color='{}'>{}</span>\n\n",
+            self.title_size,
+            self.border_color,
+            gtk4::glib::markup_escape_text(&self.title)
+        );
+
+        let mut tasks_md = String::new();
+        for task in &self.tasks {
+            tasks_md.push_str(&format!("{}\n", task));
+        }
+
+        let mut options = Options::empty();
+        options.insert(Options::ENABLE_STRIKETHROUGH);
+        options.insert(Options::ENABLE_TASKLISTS);
+
+        let parser = Parser::new_ext(&tasks_md, options);
+
+        for event in parser {
+            match event {
+                Event::Start(Tag::Heading { level, .. }) => {
+                    let size = match level {
+                        HeadingLevel::H1 => "xx-large",
+                        HeadingLevel::H2 => "x-large",
+                        _ => "large",
+                    };
+                    pango_output.push_str(&format!(
+                        "<span font_weight='bold' size='{}' color='{}'>",
+                        size, self.border_color
+                    ));
+                }
+                Event::End(TagEnd::Heading(_)) => pango_output.push_str("</span>\n\n"),
+
+                Event::Start(Tag::Strong) => pango_output.push_str("<b>"),
+                Event::End(TagEnd::Strong) => pango_output.push_str("</b>"),
+
+                Event::Start(Tag::Emphasis) => pango_output.push_str("<i>"),
+                Event::End(TagEnd::Emphasis) => pango_output.push_str("</i>"),
+
+                Event::Start(Tag::Item) => pango_output.push_str(" • "),
+                Event::End(TagEnd::Item) => pango_output.push_str("\n"),
+
+                Event::TaskListMarker(checked) => {
+                    if checked {
+                        pango_output.push_str(&format!("<b>[<span color='#a6e3a1'>x</span>]</b> "));
+                    } else {
+                        pango_output.push_str("<b>[ ]</b> ");
+                    }
+                }
+
+                Event::Text(text) => pango_output.push_str(&gtk4::glib::markup_escape_text(&text)),
+
+                Event::SoftBreak | Event::HardBreak => pango_output.push_str("\n"),
+
+                _ => {}
+            }
+        }
+        pango_output
     }
 }

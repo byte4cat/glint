@@ -43,10 +43,25 @@ impl GlintApp {
             }
         }
 
+        if display.is_composited() {
+            window.set_opacity(1.0);
+        }
+
+        // let label = Label::builder()
+        //     .justify(gtk4::Justification::Left)
+        //     .xalign(0.0)
+        //     .wrap(false)
+        //     .hexpand(false)
+        //     .vexpand(false)
+        //     .use_markup(true)
+        //     .build();
+
         let label = Label::builder()
             .justify(gtk4::Justification::Left)
             .xalign(0.0)
             .wrap(true)
+            .wrap_mode(gtk4::pango::WrapMode::WordChar)
+            .max_width_chars(50)
             .use_markup(true)
             .build();
 
@@ -68,19 +83,20 @@ impl GlintApp {
                 background-image: none; 
                 border-radius: {b_radius}px; 
                 border: {b_width}px solid {b_color};
-                min-width: 240px;
+                min-width: 300px;
             }} 
             label {{ 
                 color: {text}; 
-                padding: 30px; 
+                padding: 25px 30px; 
                 font-family: 'JetBrains Mono', 'sans-serif'; 
                 font-size: {size}pt;
+                margin: 0;
             }}",
-            bg = config.background_color.trim(),
+            bg = config.background_color,
             b_width = config.border_width,
-            b_color = config.border_color.trim(),
+            b_color = config.border_color,
             b_radius = config.border_radius,
-            text = config.text_color.trim(),
+            text = config.text_color,
             size = config.font_size,
         );
         self.provider.load_from_data(&css);
@@ -90,6 +106,10 @@ impl GlintApp {
     fn apply_ui(&self, config: &Config) {
         self.window.set_anchor(Edge::Bottom, config.anchor_bottom);
         self.window.set_anchor(Edge::Right, config.anchor_right);
+
+        self.window.set_anchor(Edge::Top, false);
+        self.window.set_anchor(Edge::Left, false);
+
         self.window.set_margin(Edge::Bottom, config.margin_bottom);
         self.window.set_margin(Edge::Right, config.margin_right);
 
@@ -107,9 +127,11 @@ impl GlintApp {
         self.window.set_visible(false);
         self.label.set_markup(&config.format_markdown());
         self.window.set_size_request(-1, -1);
-        self.window.set_default_size(0, 0);
-        self.window.set_visible(true);
+        let (_, natural_size) = self.label.preferred_size();
+        self.window
+            .set_default_size(natural_size.width() + 10, natural_size.height() + 10);
         self.window.queue_resize();
+        self.window.set_visible(true);
     }
 
     pub fn run(self) {
