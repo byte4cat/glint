@@ -4,6 +4,8 @@ use std::rc::Rc;
 use std::sync::mpsc::channel;
 
 use crate::config::Config;
+use crate::markup;
+use crate::style;
 use gtk4::prelude::*;
 use gtk4::{
     glib, style_context_add_provider_for_display, Application, ApplicationWindow, CssProvider,
@@ -80,30 +82,7 @@ impl GlintApp {
     }
 
     fn apply_css(&self, config: &Config) {
-        let ff_list = config.font_family.join(", ");
-        let css = format!(
-            ".glint-window {{
-                background-color: {bg}; 
-                background-image: none; 
-                border-radius: {b_radius}px; 
-                border: {b_width}px solid {b_color};
-                min-width: 300px;
-            }} 
-            label {{ 
-                color: {text}; 
-                padding: 25px 30px; 
-                font-family: {ff};
-                font-size: {size}pt;
-                margin: 0;
-            }}",
-            ff = ff_list,
-            bg = config.background_color,
-            b_width = config.border_width,
-            b_color = config.border_color,
-            b_radius = config.border_radius,
-            text = config.text_color,
-            size = config.font_size,
-        );
+        let css = style::generate_css(config);
         self.provider.load_from_data(&css);
     }
 
@@ -128,9 +107,11 @@ impl GlintApp {
             );
         }
 
+        let content = config.get_note_content();
         // The "violent" update only happens when this function is called
         self.window.set_visible(false);
-        self.label.set_markup(&config.format_markdown());
+        let pango_markup = markup::to_pango(&content, config);
+        self.label.set_markup(&pango_markup);
         self.window.set_size_request(-1, -1);
         let (_, natural_size) = self.label.preferred_size();
         self.window

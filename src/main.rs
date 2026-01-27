@@ -1,5 +1,7 @@
 mod app;
 mod config;
+mod markup;
+mod style;
 
 use app::GlintApp;
 use gtk4::prelude::*;
