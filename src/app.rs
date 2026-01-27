@@ -1,7 +1,6 @@
 use notify::{RecursiveMode, Watcher};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::mpsc::channel;
 
 use crate::config::Config;
 use crate::markup;
@@ -11,7 +10,7 @@ use gtk4::{
     glib, style_context_add_provider_for_display, Application, ApplicationWindow, CssProvider,
     Label,
 };
-use gtk4_layer_shell::{Edge, Layer, LayerShell};
+use gtk4_layer_shell::{Layer, LayerShell};
 
 pub struct GlintApp {
     window: ApplicationWindow,
@@ -86,16 +85,28 @@ impl GlintApp {
         self.provider.load_from_data(&css);
     }
 
-    // Only call this when we KNOW the config is different
+    // Only call this when we KNOW the config is changed
     fn apply_ui(&self, config: &Config) {
-        self.window.set_anchor(Edge::Bottom, config.anchor_bottom);
-        self.window.set_anchor(Edge::Right, config.anchor_right);
+        use gtk4_layer_shell::Edge;
 
-        self.window.set_anchor(Edge::Top, false);
-        self.window.set_anchor(Edge::Left, false);
+        let edges = [
+            (Edge::Top, config.margin_top),
+            (Edge::Bottom, config.margin_bottom),
+            (Edge::Left, config.margin_left),
+            (Edge::Right, config.margin_right),
+        ];
 
-        self.window.set_margin(Edge::Bottom, config.margin_bottom);
-        self.window.set_margin(Edge::Right, config.margin_right);
+        for (edge, margin_opt) in edges {
+            match margin_opt {
+                Some(margin) => {
+                    self.window.set_anchor(edge, true);
+                    self.window.set_margin(edge, margin);
+                }
+                None => {
+                    self.window.set_anchor(edge, false);
+                }
+            }
+        }
 
         self.apply_css(config);
 
@@ -130,7 +141,7 @@ impl GlintApp {
 
         app_rc.window.present();
 
-        let (tx, rx) = channel();
+        let (tx, rx) = std::sync::mpsc::channel::<()>();
 
         let mut watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
             if let Ok(event) = res {

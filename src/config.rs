@@ -9,14 +9,14 @@ pub struct Config {
     pub title_size: u32,
     #[serde(default = "default_monitor_name")]
     pub monitor_name: Option<String>,
-    #[serde(default = "default_true")]
-    pub anchor_bottom: bool,
-    #[serde(default = "default_true")]
-    pub anchor_right: bool,
-    #[serde(default = "default_margin")]
-    pub margin_bottom: i32,
-    #[serde(default = "default_margin")]
-    pub margin_right: i32,
+
+    // pos
+    pub margin_top: Option<i32>,
+    pub margin_bottom: Option<i32>,
+    pub margin_left: Option<i32>,
+    pub margin_right: Option<i32>,
+
+    // css
     #[serde(default = "default_bg")]
     pub background_color: String,
     #[serde(default = "default_text")]
@@ -33,48 +33,32 @@ pub struct Config {
     pub border_radius: u32,
 }
 
-fn default_title_size() -> u32 {
-    24
-}
-
-fn default_monitor_name() -> Option<String> {
-    None
-}
-
-fn default_true() -> bool {
-    true
-}
-
-fn default_margin() -> i32 {
-    40
-}
-
 fn default_bg() -> String {
-    "#1e1e2e".to_string()
+    "#1e1e2e".into()
 }
-
 fn default_text() -> String {
-    "#cdd6f4".to_string()
+    "#cdd6f4".into()
 }
-
 fn default_font_size() -> u32 {
     14
 }
-
-fn default_font_family() -> Vec<String> {
-    vec!["JetBrains Mono".into(), "sans-serif".into()]
+fn default_title_size() -> u32 {
+    24
 }
-
 fn default_border_width() -> u32 {
     3
 }
-
-fn default_border_color() -> String {
-    "#89b4fa".to_string()
-}
-
 fn default_border_radius() -> u32 {
     16
+}
+fn default_border_color() -> String {
+    "#89b4fa".into()
+}
+fn default_font_family() -> Vec<String> {
+    vec!["JetBrains Mono".into(), "sans-serif".into()]
+}
+fn default_monitor_name() -> Option<String> {
+    None
 }
 
 fn default_note_path() -> String {
@@ -99,7 +83,18 @@ impl Config {
             .join("config.toml");
 
         let content = std::fs::read_to_string(config_path)?;
-        let config: Config = toml::from_str(&content)?;
+        let mut config: Config = toml::from_str(&content)?;
+
+        // default to right bottom
+        if config.margin_top.is_none()
+            && config.margin_bottom.is_none()
+            && config.margin_left.is_none()
+            && config.margin_right.is_none()
+        {
+            config.margin_bottom = Some(40);
+            config.margin_right = Some(40);
+        }
+
         Ok(config)
     }
 }

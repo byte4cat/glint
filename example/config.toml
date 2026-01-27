@@ -1,10 +1,10 @@
 note_path = "path/to/your/notes.md"
 title_size = 24
 # monitor_name = 'DP-1' # not support hot reload
-anchor_bottom = true
-anchor_right = true
+
 margin_bottom = 40
 margin_right = 40
+
 # background_color = "rgba(20, 20, 30, 0.9)"
 # or
 background_color = "#1e1e2e"

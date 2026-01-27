@@ -17,7 +17,6 @@ pub fn to_pango(content: &str, config: &Config) -> String {
         gtk4::glib::markup_escape_text(title_text)
     ));
 
-    // 2. 處理 Body
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);
     options.insert(Options::ENABLE_TASKLISTS);
