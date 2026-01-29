@@ -1,5 +1,6 @@
 use crate::config::Config;
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
+use html2pango::markup_html;
+use pulldown_cmark::{html, Options, Parser};
 
 pub fn to_pango(content: &str, config: &Config) -> String {
     let mut lines = content.lines();
@@ -8,55 +9,47 @@ pub fn to_pango(content: &str, config: &Config) -> String {
     let title_text = first_line.trim_start_matches('#').trim();
     let remaining_body: String = lines.collect::<Vec<&str>>().join("\n");
 
-    let mut pango_output = String::with_capacity(content.len() * 2);
-
-    pango_output.push_str(&format!(
-        "<span font_weight='bold' size='{}pt' color='{}'>{}</span>\n\n",
-        config.title_size,
-        config.border_color,
-        gtk4::glib::markup_escape_text(title_text)
-    ));
-
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);
     options.insert(Options::ENABLE_TASKLISTS);
 
     let parser = Parser::new_ext(&remaining_body, options);
+    let mut html_output = String::new();
+    html::push_html(&mut html_output, parser);
 
-    for event in parser {
-        match event {
-            Event::Start(Tag::Heading { level, .. }) => {
-                let size = match level {
-                    HeadingLevel::H1 => "x-large",
-                    _ => "large",
-                };
-                pango_output.push_str(&format!("<span font_weight='bold' size='{}'>", size));
-            }
-            Event::End(TagEnd::Heading(_)) => pango_output.push_str("</span>\n"),
-            Event::Start(Tag::Strong) => pango_output.push_str("<b>"),
-            Event::End(TagEnd::Strong) => pango_output.push_str("</b>"),
-            Event::TaskListMarker(checked) => {
-                let mark = if checked {
-                    "<span color='#a6e3a1'>x</span>"
-                } else {
-                    " "
-                };
-                pango_output.push_str(&format!("<b>[{}]</b> ", mark));
-            }
-            Event::Text(text) => pango_output.push_str(&gtk4::glib::markup_escape_text(&text)),
-            Event::Code(code) => {
-                let font_list = config.font_family.join(", ");
-                pango_output.push_str(&format!(
-                    "<span font_family='{}' background='#313244' foreground='#f5e0dc' rise='-1000'> {} </span>",
-                    font_list,
-                    gtk4::glib::markup_escape_text(&code)
-                ));
-            }
-            Event::SoftBreak | Event::HardBreak => pango_output.push_str("\n"),
-            Event::Start(Tag::Item) => pango_output.push_str(" • "),
-            Event::End(TagEnd::Item) => pango_output.push_str("\n"),
-            _ => {}
-        }
-    }
-    pango_output
+    println!("html_output: {}", html_output);
+
+    let fortified_html = html_output
+        .replace("<h2>", "<h2><b>")
+        .replace("</h2>", "</b></h2>")
+        .replace("<h3>", "<h3><b>")
+        .replace("</h3>", "</b></h3>");
+
+    println!("fortified_html: {}", fortified_html);
+
+    let mut pango_body = markup_html(&format!("<body>{}</body>", fortified_html))
+        .unwrap_or_else(|_| gtk4::glib::markup_escape_text(&remaining_body).to_string());
+
+    let font_list = config.font_family.join(", ");
+    pango_body = pango_body
+        .replace(
+            "<tt>",
+            &format!(
+                "<span font_family='{}' background='#313244' foreground='#f5e0dc' rise='-1000'> ",
+                font_list
+            ),
+        )
+        .replace("</tt>", " </span>")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'");
+
+    println!("pango_body: {}", pango_body);
+
+    format!(
+        "<span font_weight='bold' size='{}pt' color='{}'>{}</span>\n\n{}",
+        config.title_size,
+        config.border_color,
+        gtk4::glib::markup_escape_text(title_text),
+        pango_body
+    )
 }
